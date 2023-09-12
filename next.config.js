@@ -13,6 +13,7 @@ const nextConfig = {
     mainnetWsUrl: undefined,
     xenMinerServer: process.env.XEN_MINER_SERVER,
   },
+  /*
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     config.module.rules.push({
       test: /\.wasm$/,
@@ -43,6 +44,7 @@ const nextConfig = {
     // Important: return the modified config
     return config;
   },
+   */
 }
 
 module.exports = nextConfig
