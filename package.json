@@ -9,14 +9,29 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@faircrypto/xen-crypto": "^0.5.0",
+    "@mui/icons-material": "^5.14.8",
+    "@mui/material": "^5.14.8",
+    "@rainbow-me/rainbowkit": "^1.0.11",
     "@types/node": "20.6.0",
     "@types/react": "18.2.21",
     "@types/react-dom": "18.2.7",
+    "@wagmi/core": "^1.4.1",
+    "argon2": "^0.31.1",
+    "argon2-browser": "^1.18.0",
+    "base64-loader": "^1.0.0",
     "eslint": "8.49.0",
     "eslint-config-next": "13.4.19",
     "next": "13.4.19",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "typescript": "5.2.2"
+    "remove": "^0.1.5",
+    "typescript": "5.2.2",
+    "wagmi": "^1.4.1"
+  },
+  "devDependencies": {
+    "@types/argon2-browser": "^1.18.1"
   }
 }
