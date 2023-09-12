@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import argon2, {Argon2BrowserHashOptions, ArgonType} from 'argon2-browser';
 
 export const Block = ({
@@ -18,7 +18,9 @@ export const Block = ({
     attempts,
     timestamp,
     getBlockHash: async () => {
-        const sha256: crypto.Hash = crypto.createHash('sha256');
+        if (typeof window === 'undefined') return '';
+
+        const sha256: crypto.Hash = (window as any).crypto.createHash('sha256');
         sha256.update(`${index}${prevHash}${data}${validHash}${randomData}${attempts}${timestamp}`, 'utf-8');
         return sha256.digest('hex');
     },
@@ -27,15 +29,17 @@ export const Block = ({
 export const genesisBlock = Block({ index: 0, prevHash: '0', data: 'Genesis Block', validHash: '0', randomData: '0' });
 
 const generateRandomSHA256 = (maxLength: number = 128): string => {
+    if (typeof window === 'undefined') return '';
+
     const characters: string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
     let randomString: string = '';
 
-    for (let i = 0; i < crypto.randomInt(1, maxLength + 1); i++) {
-        const randomIndex: number = crypto.randomInt(0, characters.length);
+    for (let i = 0; i < (window as any).crypto.randomInt(1, maxLength + 1); i++) {
+        const randomIndex: number = (window as any).crypto.randomInt(0, characters.length);
         randomString += characters.charAt(randomIndex);
     }
 
-    const sha256: crypto.Hash = crypto.createHash('sha256');
+    const sha256: crypto.Hash = (window as any).crypto.createHash('sha256');
     sha256.update(randomString, 'utf-8');
 
     return sha256.digest('hex');
