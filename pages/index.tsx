@@ -19,6 +19,7 @@ const targetSubstr = "XEN11"
 const numBlocksToMine = 20000000;
 
 export default function Home() {
+  const workerRef = useRef<Worker>();
   const {isLarge} = useContext(ThemeContext);
   const {balance} = useContext(XenCryptoContext);
 
@@ -27,9 +28,17 @@ export default function Home() {
   console.log(balance, hasEnough);
 
   useEffect(() => {
-    const genesis = genesisBlock;
-    genesisBlock.getBlockHash()
-        .then((hash) => mineBlock(targetSubstr, hash));
+    workerRef.current = new Worker(new URL('../common/worker.ts', import.meta.url));
+    console.log(workerRef.current)
+    if (workerRef.current) {
+      // @ts-ignore
+      workerRef.current.onmessage = (e) => console.log(e);
+      genesisBlock.getBlockHash()
+        .then((hash) => {
+          // @ts-ignore
+          workerRef.current.postMessage({data: {targetSubstr, hash}})
+        });
+    }
   }, []);
 
   return (
