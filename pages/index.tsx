@@ -22,6 +22,8 @@ import {ThemeContext} from "@/contexts/Theme";
 import getConfig from "next/config";
 import {XenCryptoContext} from "@/contexts/XenCrypto";
 import {genesisBlock} from "@/common/miner";
+import {useMinerServer} from "@/hooks/useMinerServer";
+import {useAccount} from "wagmi";
 
 
 const {publicRuntimeConfig: config} = getConfig();
@@ -40,22 +42,25 @@ const workerState = { running: false, hash: '', attempt: 0, blocks: [], hashRate
 
 export default function Home() {
   const workerRef = useRef<Worker[]>([]);
-  const {isLarge} = useContext(ThemeContext);
+  const { address } = useAccount();
+  // const {isLarge} = useContext(ThemeContext);
   const {balance} = useContext(XenCryptoContext);
+  const { difficulty: memory, getDifficulty, postBlock } = useMinerServer();
 
   const [targetSubstr, setTargetSubstr] = useState<string>('XEN11');
   const [difficulty, setDifficulty] = useState<number>(1);
-  const [memory, setMemory] = useState<number>(8);
+  // const [memory, setMemory] = useState<number>(8);
   const [threads, setThreads] = useState<number>(0);
 
   const [state, setState] = useState<WorkerState[]>([]);
 
   const minBalance = BigInt(config.minBalance || 0) * weiInEth;
   const hasEnough = balance >= minBalance;
-  // console.log(balance, hasEnough);
+  // console.log(balance, difficulty);
 
   useEffect(() => {
     setThreads(window.navigator.hardwareConcurrency || 1);
+    // getDifficulty().then();
   }, []);
 
   useEffect(() => {
@@ -73,7 +78,7 @@ export default function Home() {
   }
 
   const onMemoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMemory(parseInt(e.target.value || '0'));
+    // setMemory(parseInt(e.target.value || '0'));
   }
 
   const onThreadsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,8 +87,8 @@ export default function Home() {
 
   const resetDefaults = () => {
     setTargetSubstr('XEN11');
+    getDifficulty().then(_ => {});
     setDifficulty(1);
-    setMemory(8);
     setThreads(window?.navigator?.hardwareConcurrency || 1);
   }
 
@@ -91,14 +96,23 @@ export default function Home() {
     const idx = e.data.idx;
     switch (e.data.type) {
       case 'block':
-        setState(ww => [
+        postBlock({
+          hash_to_verify: e.data.result.hashedData,
+          key: e.data.result.key,
+          account: address as string,
+          attempts: e.data.result.attempts,
+          hashes_per_second: state[idx].hashRate,
+        }).then(_ => {
+          console.log(_);
+          setState(ww => [
             ...ww.slice(0, idx),
             {
               ...ww[idx],
-              blocks: [...ww[idx].blocks, e.data.block]
+              blocks: [...ww[idx].blocks, e.data.result.hashedData]
             },
             ...ww.slice(idx + 1)
-        ]);
+          ])
+        });
         break;
       case 'progress':
         setState(ww => [
@@ -231,6 +245,7 @@ export default function Home() {
               <Typography>Difficulty</Typography>
               <TextField
                   size="small"
+                  disabled
                   value={difficulty}
                   onChange={onDifficultyChange}
               />

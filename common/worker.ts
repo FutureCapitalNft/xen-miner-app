@@ -38,7 +38,7 @@ class BlockMiner extends EventEmitter {
         let o0 = this.attempts;
         while (this.#operate) {
             this.attempts++;
-            if (this.attempts % 1_000 === 0) {
+            if (this.attempts % 100 === 0) {
                 // await new Promise(resolve => setTimeout(resolve, 0));
                 queueMicrotask(() => this.emit('progress', this.attempts));
                 const hashRate = (this.attempts - o0) * 1_000 / (performance.now() - t0);
@@ -51,7 +51,11 @@ class BlockMiner extends EventEmitter {
                 .then((hashedData: string) => {
                     if ((hashedData.slice(-87) || '').includes(this.#targetSubstring)) {
                         queueMicrotask(() => {
-                            this.emit('block', hashedData);
+                            this.emit('block', {
+                                hashedData,
+                                attempts: this.attempts,
+                                key: randomData + this.#prevHash,
+                            });
                             console.log(`Found valid hash after ${this.attempts} attempts: ${hashedData}`);
                         });
                         // return new Promise(resolve => setTimeout(resolve, 1))
