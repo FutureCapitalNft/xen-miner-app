@@ -62,10 +62,10 @@ export const generateRandomSHA256 = (maxLength: number = 128): string => {
     }
 }
 
-export const hashWithArgon2 = async (data: string, length: number): Promise<string> => {
-    const difficulty = 1;
-    const memoryCost = 8;
-    const cores = 1;
+export const hashWithArgon2 = (options: any = {}) => async (data: string, length: number): Promise<string> => {
+    const difficulty = options.difficulty || 1;
+    const memoryCost = options.memoryCost || 8;
+    const cores = options.cores || 1;
 
     const hashOptions: Argon2BrowserHashOptions = {
         pass: data,

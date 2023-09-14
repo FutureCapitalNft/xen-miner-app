@@ -1,10 +1,25 @@
 import React, {useContext, useEffect, useRef, useState} from "react";
 import SendIcon from '@mui/icons-material/Send';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Avatar,
-  Box, Button,
-  Container, Grid, IconButton, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Stack, TextField,
+  Box,
+  Button,
+  Container,
+  Grid,
+  IconButton,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemSecondaryAction,
+  ListItemText,
+  Stack,
+  TextField,
+  Typography,
 } from '@mui/material';
 import {ThemeContext} from "@/contexts/Theme";
 import getConfig from "next/config";
@@ -15,7 +30,6 @@ import {afterWrite} from "@popperjs/core";
 
 const {publicRuntimeConfig: config} = getConfig();
 const weiInEth = BigInt('1000000000000000000');
-const targetSubstr: string = "XEN11"
 // const numBlocksToMine = 20000000;
 
 type WorkerState = {
@@ -30,6 +44,11 @@ export default function Home() {
   const {isLarge} = useContext(ThemeContext);
   const {balance} = useContext(XenCryptoContext);
 
+  const [targetSubstr, setTargetSubstr] = useState<string>('XEN11');
+  const [difficulty, setDifficulty] = useState<number>(1);
+  const [memory, setMemory] = useState<number>(8);
+  const [threads, setThreads] = useState<number>(4);
+
   const [state, setState] = useState<WorkerState[]>([
     { running: false, hash: '', attempt: 0, blocks: [] },
     { running: false, hash: '', attempt: 0, blocks: [] },
@@ -40,6 +59,22 @@ export default function Home() {
   const minBalance = BigInt(config.minBalance || 0) * weiInEth;
   const hasEnough = balance >= minBalance;
   // console.log(balance, hasEnough);
+
+  const onTargetSubstrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTargetSubstr(e.target.value);
+  }
+
+  const onDifficultyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDifficulty(parseInt(e.target.value || '0'));
+  }
+
+  const onMemoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMemory(parseInt(e.target.value || '0'));
+  }
+
+  const onThreadsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setThreads(parseInt(e.target.value || '0'));
+  }
 
   const onMessage = (e: MessageEvent) => {
     const idx = e.data.idx;
@@ -91,6 +126,11 @@ export default function Home() {
         idx: i,
         targetSubstr,
         hash: state[i].hash,
+        options: {
+          difficulty,
+          memoryCost: memory,
+          threads
+        }
       })
       setState(ww => [
         ...ww.slice(0, i),
@@ -142,18 +182,65 @@ export default function Home() {
 
   return (
     <Container>
-        <List>
-          {workerRef.current.map((w, i) => <ListItem key={i}>
-          <ListItemText primary={<Stack direction="row" sx={{ alignItems: 'center '}}>
-                          <Button onClick={onButtonClick(i)}>
-                            {state[i]?.running ? 'Stop' : 'Start'}
-                          </Button>
-                          <Box sx={{ px: 1 }}>Attempts: {state[i]?.attempt.toLocaleString()}</Box>
-                          <Box sx={{ px: 1 }}>Blocks found: {state[i]?.blocks.length}</Box>
-                        </Stack>} />
-          <ListItemSecondaryAction />
-        </ListItem>)}
-        </List>
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography>Settings</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <ListItem>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Typography>Search For</Typography>
+              <TextField
+                  size="small"
+                  value={targetSubstr}
+                  onChange={onTargetSubstrChange}
+              />
+            </Stack>
+          </ListItem>
+          <ListItem>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Typography>Difficulty</Typography>
+              <TextField
+                  size="small"
+                  value={difficulty}
+                  onChange={onDifficultyChange}
+              />
+            </Stack>
+          </ListItem>
+          <ListItem>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Typography>Memory</Typography>
+              <TextField
+                  size="small"
+                  value={memory}
+                  onChange={onMemoryChange}
+              />
+            </Stack>
+          </ListItem>
+          <ListItem>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Typography>Threads</Typography>
+            <TextField
+                size="small"
+                value={threads}
+                onChange={onThreadsChange}
+            />
+          </Stack>
+          </ListItem>
+        </AccordionDetails>
+      </Accordion>
+      <List>
+        {workerRef.current.map((w, i) => <ListItem key={i}>
+        <ListItemText primary={<Stack direction="row" sx={{ alignItems: 'center '}}>
+                        <Button onClick={onButtonClick(i)}>
+                          {state[i]?.running ? 'Stop' : 'Start'}
+                        </Button>
+                        <Box sx={{ px: 1 }}>Attempts: {state[i]?.attempt.toLocaleString()}</Box>
+                        <Box sx={{ px: 1 }}>Blocks found: {state[i]?.blocks.length}</Box>
+                      </Stack>} />
+        <ListItemSecondaryAction />
+      </ListItem>)}
+      </List>
     </Container>
   )
 }

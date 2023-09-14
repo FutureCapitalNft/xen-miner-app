@@ -3,11 +3,12 @@ import EventEmitter from "events";
 
 class BlockMiner extends EventEmitter {
     static instance: BlockMiner;
+    static #options: any;
 
     id: number;
     #operate = false;
     #maxLength = 128;
-    #targetSubstring: string;
+    readonly #targetSubstring: string;
     #prevHash: string;
     attempts = 0;
 
@@ -18,8 +19,13 @@ class BlockMiner extends EventEmitter {
         return BlockMiner.instance;
     }
 
-    constructor(id: number, targetSubstring: string, prevHash: string) {
+    constructor(id: number,
+                targetSubstring: string,
+                prevHash: string,
+                options: any = { memoryCost: 8, difficulty: 1, cores: 1 }
+    ) {
         super();
+        BlockMiner.#options = options;
         console.log('create new BlockMiner', id);
         this.id = id;
         this.#targetSubstring = targetSubstring;
@@ -35,7 +41,7 @@ class BlockMiner extends EventEmitter {
                 queueMicrotask(() => this.emit('progress', this.attempts));
             }
             const randomData: string = generateRandomSHA256();
-            await hashWithArgon2(randomData + this.#prevHash, this.#maxLength)
+            await hashWithArgon2(BlockMiner.#options)(randomData + this.#prevHash, this.#maxLength)
                 .then((hashedData: string) => {
                     if ((hashedData.slice(-87) || '').includes(this.#targetSubstring)) {
                         queueMicrotask(() => {
@@ -55,12 +61,12 @@ class BlockMiner extends EventEmitter {
 }
 
 onmessage = (e) => {
-    console.log('Message received from main script', e.data.cmd, e.data.idx);
+    console.log('Message received from main script', e.data.cmd, e.data.idx, e.data.targetSubstr);
     const idx = e.data.idx;
     let miner: BlockMiner | null = null;
 
     if (e.data.cmd === 'start') {
-        miner = new BlockMiner(e.data.idx, e.data.targetSubstr, e.data.hash);
+        miner = new BlockMiner(e.data.idx, e.data.targetSubstr, e.data.hash, e.data.options);
         miner.addListener('block', (result: any) => {
             console.log('Found block', result);
             postMessage({result, type: 'block', idx });
