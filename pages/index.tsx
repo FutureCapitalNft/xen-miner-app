@@ -18,78 +18,142 @@ const weiInEth = BigInt('1000000000000000000');
 const targetSubstr: string = "XEN11"
 // const numBlocksToMine = 20000000;
 
+type WorkerState = {
+  running: boolean;
+  hash: string;
+  attempt: number;
+  blocks: any[];
+}
+
 export default function Home() {
-  const workerRef = useRef<Worker>();
+  const workerRef = useRef<Worker[]>([]);
   const {isLarge} = useContext(ThemeContext);
   const {balance} = useContext(XenCryptoContext);
-  const [running, setRunning] = useState(false);
-  const [hash, setHash] = useState<string>();
-  const [blocks, setBlocks] = useState<any[]>([]);
-  const [attempt, setAttempt] = useState(0);
+
+  const [state, setState] = useState<WorkerState[]>([
+    { running: false, hash: '', attempt: 0, blocks: [] },
+    { running: false, hash: '', attempt: 0, blocks: [] },
+    { running: false, hash: '', attempt: 0, blocks: [] },
+    { running: false, hash: '', attempt: 0, blocks: [] },
+  ]);
 
   const minBalance = BigInt(config.minBalance || 0) * weiInEth;
   const hasEnough = balance >= minBalance;
-  console.log(balance, hasEnough);
+  // console.log(balance, hasEnough);
 
   const onMessage = (e: MessageEvent) => {
+    const idx = e.data.idx;
     switch (e.data.type) {
       case 'block':
-        setBlocks(bb => [...bb, e.data.result]);
+        setState(ww => [
+            ...ww.slice(0, idx),
+            {
+              ...ww[idx],
+              blocks: [...ww[idx].blocks, e.data.block]
+            },
+            ...ww.slice(idx + 1)
+        ]);
         break;
       case 'progress':
-        setAttempt(e.data.attempt);
+        setState(ww => [
+          ...ww.slice(0, idx),
+          {
+            ...ww[idx],
+            attempt: e.data.attempt
+          },
+          ...ww.slice(idx + 1)
+        ]);
         break;
     }
   }
 
-  const onButtonClick = () => {
-    if (running && workerRef.current) {
-      console.log('stop', workerRef.current)
-      workerRef.current?.terminate(); // postMessage({ cmd: 'stop' });
-      workerRef.current = undefined;
-      setRunning(false);
-    } else if (workerRef.current) {
-      console.log('start', workerRef.current)
-      workerRef.current.postMessage({ cmd: 'start', targetSubstr, hash })
-      setRunning(true);
+  const onButtonClick = (i: number) => () => {
+    if (state[i].running && workerRef.current[i]) {
+      console.log('stop', workerRef.current[i])
+      workerRef.current[i].terminate(); // postMessage({ cmd: 'stop' });
+      workerRef.current[i] = undefined as any;
+      setState(ww => [
+        ...ww.slice(0, i),
+        {
+          ...ww[i],
+          running: false
+        },
+        ...ww.slice(i + 1)
+      ]);
+    } else if (!state[i].running) {
+      console.log('start', workerRef.current[i])
+      workerRef.current[i] = new Worker(new URL('../common/worker.ts', import.meta.url));
+      workerRef.current[i].onmessage = onMessage;
+      workerRef.current[i].onerror = (e) => console.log(e);
+      workerRef.current[i].onmessageerror = (e) => console.log(e);
+      workerRef.current[i].postMessage({
+        cmd: 'start',
+        idx: i,
+        targetSubstr,
+        hash: state[i].hash,
+      })
+      setState(ww => [
+        ...ww.slice(0, i),
+        {
+          ...ww[i],
+          running: true
+        },
+        ...ww.slice(i + 1)
+      ]);
     } else {
       console.log('worker not ready');
     }
   }
 
   useEffect(() => {
-    if (!workerRef.current && !running) {
-      // initial setup
-      workerRef.current = new Worker(new URL('../common/worker.ts', import.meta.url));
-      console.log('new worker');
-      workerRef.current.onmessage = onMessage;
-      workerRef.current.onerror = (e) => console.log(e);
-      workerRef.current.onmessageerror = (e) => console.log(e);
-      console.log(workerRef.current);
-      if (!hash) {
-        genesisBlock.getBlockHash()
-            .then(setHash);
+    if (workerRef.current.length === 0) {
+      for (let idx = 0; idx < 4; idx++) {
+        console.log(idx);
+        if (!state[idx].running) {
+          // initial setup
+          const w = new Worker(new URL('../common/worker.ts', import.meta.url));
+          console.log('new worker');
+          w.onmessage = onMessage;
+          w.onerror = (e) => console.log(e);
+          w.onmessageerror = (e) => console.log(e);
+          workerRef.current.push(w);
+          console.log(workerRef.current);
+          if (!state[idx].hash) {
+            genesisBlock.getBlockHash()
+                .then(hash => {
+                  setState(ww => [
+                    ...ww.slice(0, idx),
+                    {
+                      ...ww[idx],
+                      hash
+                    },
+                    ...ww.slice(idx + 1)
+                  ]);
+                })
+          }
+        }
       }
     }
-  }, [running, hash]);
 
-  const disabled = !workerRef.current || !hash;
-  console.log(!workerRef.current, !hash, disabled);
+  }, []);
+
+  // console.log(workerRef.current);
+  // console.log(state);
 
   return (
     <Container>
-      <Stack spacing={2} direction="column">
-        <Button onClick={onButtonClick}>
-          {running ? 'Stop' : 'Start'}
-        </Button>
-        <Box>Attempts: {attempt.toLocaleString()}</Box>
-        {/*<List>{blocks.map((b, i) => <ListItem key={i}>
-          <ListItemText primaryTypographyProps={{ sx: { textOverflow: 'clip' } }}
-                        primary={b} />
+        <List>
+          {workerRef.current.map((w, i) => <ListItem key={i}>
+          <ListItemText primary={<Stack direction="row" sx={{ alignItems: 'center '}}>
+                          <Button onClick={onButtonClick(i)}>
+                            {state[i]?.running ? 'Stop' : 'Start'}
+                          </Button>
+                          <Box sx={{ px: 1 }}>Attempts: {state[i]?.attempt.toLocaleString()}</Box>
+                          <Box sx={{ px: 1 }}>Blocks found: {state[i]?.blocks.length}</Box>
+                        </Stack>} />
           <ListItemSecondaryAction />
-        </ListItem>)}</List>*/}
-        <Box >Blocks found: {blocks.length}</Box>
-      </Stack>
+        </ListItem>)}
+        </List>
     </Container>
   )
 }
