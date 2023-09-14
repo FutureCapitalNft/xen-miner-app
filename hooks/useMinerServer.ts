@@ -1,18 +1,18 @@
 import {useEffect, useState} from "react";
-import getConfig from "next/config";
+// import getConfig from "next/config";
 
-const {publicRuntimeConfig: config} = getConfig();
+// const {publicRuntimeConfig: config} = getConfig();
 
 export const useMinerServer = () => {
-    const [difficulty, setDifficulty] = useState(1);
+    const [difficulty, setDifficulty] = useState(8);
 
     const getDifficulty = async () => {
-        fetch(`${config.xenMinerServer}/difficulty`, {
-            mode: 'cors'
+        fetch(`/api/difficulty`, {
+            // mode: 'cors'
         })
             .then((res) => res.json())
             .then(({difficulty}) => setDifficulty(Number(difficulty)))
-            //.catch(_ => setDifficulty(1))
+            .catch(_ => setDifficulty(8))
     }
 
     useEffect(() => {
@@ -26,7 +26,7 @@ export const useMinerServer = () => {
         attempts: number,
         hashes_per_second: number
     }) => {
-        const resp = await fetch(`${config.xenMinerServer}/verify`, {
+        const resp = await fetch(`/api/verify`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
