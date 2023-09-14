@@ -7,7 +7,7 @@ class BlockMiner extends EventEmitter {
 
     id: number;
     #operate = false;
-    #maxLength = 128;
+    #maxLength = 64;
     readonly #targetSubstring: string;
     #prevHash: string;
     attempts = 0;

@@ -1,7 +1,4 @@
 import {useEffect, useState} from "react";
-// import getConfig from "next/config";
-
-// const {publicRuntimeConfig: config} = getConfig();
 
 export const useMinerServer = () => {
     const [difficulty, setDifficulty] = useState(8);
