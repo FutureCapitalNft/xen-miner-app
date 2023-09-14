@@ -3,21 +3,15 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import {
   AppBar,
   Box,
-  Divider,
   IconButton,
-  Menu,
-  MenuItem,
-  Stack,
   Toolbar,
   Tooltip, Typography,
   useTheme
 } from '@mui/material';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { watchNetwork } from '@wagmi/core';
 import getConfig from 'next/config';
-import { useRouter } from 'next/router';
-import React, { useContext, useEffect, useState } from 'react';
-import { useAccount, useNetwork } from 'wagmi';
+import React, { useContext } from 'react';
+import { useNetwork } from 'wagmi';
 
 import { ThemeContext } from '@/contexts/Theme';
 import {XenCryptoContext} from "@/contexts/XenCrypto";
@@ -54,6 +48,7 @@ const ApplicationBar = () => {
           <Typography
             component="div"
             fontWeight="bold"
+            color={theme.palette.text.primary}
             sx={{ flexGrow: 1 }}>
             XenMiner v0.0000001
           </Typography>

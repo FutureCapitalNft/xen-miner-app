@@ -1,20 +1,17 @@
+import styles from '../styles/Home.module.css';
+
 import React, {useContext, useEffect, useRef, useState} from "react";
-import SendIcon from '@mui/icons-material/Send';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Avatar,
   Box,
   Button,
   Container,
-  Grid,
-  IconButton,
   List,
   ListItem,
-  ListItemAvatar,
   ListItemSecondaryAction,
   ListItemText,
   Stack,
@@ -25,7 +22,6 @@ import {ThemeContext} from "@/contexts/Theme";
 import getConfig from "next/config";
 import {XenCryptoContext} from "@/contexts/XenCrypto";
 import {genesisBlock} from "@/common/miner";
-import {afterWrite} from "@popperjs/core";
 
 
 const {publicRuntimeConfig: config} = getConfig();
@@ -214,8 +210,8 @@ export default function Home() {
   const opts = { maximumFractionDigits: 2 };
 
   return (
-    <Container>
-      <Accordion>
+    <Container sx={{ minHeight: '90vh '}} className={styles.container}>
+      <Accordion elevation={0}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography>Settings</Typography>
         </AccordionSummary>
@@ -267,7 +263,7 @@ export default function Home() {
           </ListItem>
         </AccordionDetails>
       </Accordion>
-      <List>
+      <List sx={{ backgroundColor: 'transparent' }}>
         {workerRef.current.map((w, i) => <ListItem key={i}>
         <ListItemText primary={<Stack direction="row" sx={{ alignItems: 'center '}}>
                         <Button onClick={onButtonClick(i)}>

@@ -1,8 +1,6 @@
 import { CssBaseline } from '@mui/material';
 
-import styles from '../styles/Home.module.css';
 import ApplicationBar from './ApplicationBar';
-import Footer from './Footer';
 import Head from "next/head";
 import React from "react";
 
@@ -30,14 +28,14 @@ const project = {
 const Layout = ({ children }: any) => (
   <>
     <Head>
-      <title>XEN GPT Chat</title>
-      <meta name="description" content="XEN GPT Chat" />
+      <title>XEN Miner</title>
+      <meta name="description" content="XEN Miner" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <link rel="icon" href="/favicon.ico" />
     </Head>
     <CssBaseline />
     <ApplicationBar />
-    <main style={{ marginTop: '64px', backgroundColor: '#0b0f19' }}>
+    <main style={{ marginTop: '64px' }}>
       <section style={{ width: '100%' }}>{children}</section>
     </main>
     {/*<Footer project={project}/>*/}
