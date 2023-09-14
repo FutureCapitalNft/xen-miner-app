@@ -55,7 +55,7 @@ const ApplicationBar = () => {
             component="div"
             fontWeight="bold"
             sx={{ flexGrow: 1 }}>
-            XenMiner
+            XenMiner v0.0000001
           </Typography>
           <Tooltip
             title="Toggle light/dark mode">

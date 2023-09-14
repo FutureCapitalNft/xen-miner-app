@@ -76,6 +76,13 @@ export default function Home() {
     setThreads(parseInt(e.target.value || '0'));
   }
 
+  const resetDefaults = () => {
+    setTargetSubstr('XEN11');
+    setDifficulty(1);
+    setMemory(8);
+    setThreads(4);
+  }
+
   const onMessage = (e: MessageEvent) => {
     const idx = e.data.idx;
     switch (e.data.type) {
@@ -148,16 +155,16 @@ export default function Home() {
   useEffect(() => {
     if (workerRef.current.length === 0) {
       for (let idx = 0; idx < 4; idx++) {
-        console.log(idx);
+        // console.log(idx);
         if (!state[idx].running) {
           // initial setup
           const w = new Worker(new URL('../common/worker.ts', import.meta.url));
-          console.log('new worker');
+          // console.log('new worker');
           w.onmessage = onMessage;
           w.onerror = (e) => console.log(e);
           w.onmessageerror = (e) => console.log(e);
           workerRef.current.push(w);
-          console.log(workerRef.current);
+          // console.log(workerRef.current);
           if (!state[idx].hash) {
             genesisBlock.getBlockHash()
                 .then(hash => {
@@ -226,6 +233,11 @@ export default function Home() {
                 onChange={onThreadsChange}
             />
           </Stack>
+          </ListItem>
+          <ListItem>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <Button onClick={resetDefaults}>Reset Defaults</Button>
+            </Stack>
           </ListItem>
         </AccordionDetails>
       </Accordion>
