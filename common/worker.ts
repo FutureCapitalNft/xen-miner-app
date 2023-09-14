@@ -34,11 +34,17 @@ class BlockMiner extends EventEmitter {
 
     async mine() {
         this.#operate = true;
+        let t0 = performance.now();
+        let o0 = this.attempts;
         while (this.#operate) {
             this.attempts++;
             if (this.attempts % 1_000 === 0) {
                 // await new Promise(resolve => setTimeout(resolve, 0));
                 queueMicrotask(() => this.emit('progress', this.attempts));
+                const hashRate = (this.attempts - o0) * 1_000 / (performance.now() - t0);
+                queueMicrotask(() => this.emit('hashRate', hashRate));
+                t0 = performance.now();
+                o0 = this.attempts;
             }
             const randomData: string = generateRandomSHA256();
             await hashWithArgon2(BlockMiner.#options)(randomData + this.#prevHash, this.#maxLength)
@@ -74,6 +80,10 @@ onmessage = (e) => {
         miner.addListener(
             'progress',
             (attempt) => postMessage({attempt, type: 'progress', idx})
+        )
+        miner.addListener(
+            'hashRate',
+            (hashRate) => postMessage({hashRate, type: 'hashRate', idx})
         )
         miner.mine().then(() => {});
     } else if (e.data.cmd === 'stop') {

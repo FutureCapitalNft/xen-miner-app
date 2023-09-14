@@ -37,6 +37,7 @@ type WorkerState = {
   hash: string;
   attempt: number;
   blocks: any[];
+  hashRate: number;
 }
 
 export default function Home() {
@@ -50,10 +51,10 @@ export default function Home() {
   const [threads, setThreads] = useState<number>(4);
 
   const [state, setState] = useState<WorkerState[]>([
-    { running: false, hash: '', attempt: 0, blocks: [] },
-    { running: false, hash: '', attempt: 0, blocks: [] },
-    { running: false, hash: '', attempt: 0, blocks: [] },
-    { running: false, hash: '', attempt: 0, blocks: [] },
+    { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 },
+    { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 },
+    { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 },
+    { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 },
   ]);
 
   const minBalance = BigInt(config.minBalance || 0) * weiInEth;
@@ -102,6 +103,16 @@ export default function Home() {
           {
             ...ww[idx],
             attempt: e.data.attempt
+          },
+          ...ww.slice(idx + 1)
+        ]);
+        break;
+      case 'hashRate':
+        setState(ww => [
+          ...ww.slice(0, idx),
+          {
+            ...ww[idx],
+            hashRate: e.data.hashRate
           },
           ...ww.slice(idx + 1)
         ]);
@@ -186,6 +197,7 @@ export default function Home() {
 
   // console.log(workerRef.current);
   // console.log(state);
+  const opts = { maximumFractionDigits: 2 };
 
   return (
     <Container>
@@ -247,8 +259,15 @@ export default function Home() {
                         <Button onClick={onButtonClick(i)}>
                           {state[i]?.running ? 'Stop' : 'Start'}
                         </Button>
-                        <Box sx={{ px: 1 }}>Attempts: {state[i]?.attempt.toLocaleString()}</Box>
-                        <Box sx={{ px: 1 }}>Blocks found: {state[i]?.blocks.length}</Box>
+                        <Box sx={{ px: 1 }}>
+                          Attempts {state[i]?.attempt.toLocaleString()}
+                        </Box>
+                        <Box sx={{ px: 1 }}>
+                          Blocks found {state[i]?.blocks.length}
+                        </Box>
+                        <Box sx={{ px: 1 }}>
+                          HashRate {state[i]?.hashRate.toLocaleString([], opts )}
+                        </Box>
                       </Stack>} />
         <ListItemSecondaryAction />
       </ListItem>)}
