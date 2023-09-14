@@ -40,6 +40,8 @@ type WorkerState = {
   hashRate: number;
 }
 
+const workerState = { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 };
+
 export default function Home() {
   const workerRef = useRef<Worker[]>([]);
   const {isLarge} = useContext(ThemeContext);
@@ -48,18 +50,23 @@ export default function Home() {
   const [targetSubstr, setTargetSubstr] = useState<string>('XEN11');
   const [difficulty, setDifficulty] = useState<number>(1);
   const [memory, setMemory] = useState<number>(8);
-  const [threads, setThreads] = useState<number>(4);
+  const [threads, setThreads] = useState<number>(0);
 
-  const [state, setState] = useState<WorkerState[]>([
-    { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 },
-    { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 },
-    { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 },
-    { running: false, hash: '', attempt: 0, blocks: [], hashRate: 0 },
-  ]);
+  const [state, setState] = useState<WorkerState[]>([]);
 
   const minBalance = BigInt(config.minBalance || 0) * weiInEth;
   const hasEnough = balance >= minBalance;
   // console.log(balance, hasEnough);
+
+  useEffect(() => {
+    setThreads(window.navigator.hardwareConcurrency || 1);
+  }, []);
+
+  useEffect(() => {
+    if (threads > 0) {
+      setState(Array(threads).fill(workerState) as WorkerState[]);
+    }
+  }, [threads]);
 
   const onTargetSubstrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTargetSubstr(e.target.value);
@@ -81,7 +88,7 @@ export default function Home() {
     setTargetSubstr('XEN11');
     setDifficulty(1);
     setMemory(8);
-    setThreads(4);
+    setThreads(window?.navigator?.hardwareConcurrency || 1);
   }
 
   const onMessage = (e: MessageEvent) => {
@@ -122,7 +129,7 @@ export default function Home() {
 
   const onButtonClick = (i: number) => () => {
     if (state[i].running && workerRef.current[i]) {
-      console.log('stop', workerRef.current[i])
+      console.log('stop', i, workerRef.current[i])
       workerRef.current[i].terminate(); // postMessage({ cmd: 'stop' });
       workerRef.current[i] = undefined as any;
       setState(ww => [
@@ -134,7 +141,7 @@ export default function Home() {
         ...ww.slice(i + 1)
       ]);
     } else if (!state[i].running) {
-      console.log('start', workerRef.current[i])
+      console.log('start', i,  workerRef.current[i])
       workerRef.current[i] = new Worker(new URL('../common/worker.ts', import.meta.url));
       workerRef.current[i].onmessage = onMessage;
       workerRef.current[i].onerror = (e) => console.log(e);
@@ -164,10 +171,17 @@ export default function Home() {
   }
 
   useEffect(() => {
+    if (workerRef.current.length > 0) {
+      while (workerRef.current.length > 0) {
+        const w = workerRef.current.pop();
+        w?.terminate();
+      }
+    }
+
     if (workerRef.current.length === 0) {
-      for (let idx = 0; idx < 4; idx++) {
+      for (let idx = 0; idx < threads; idx++) {
         // console.log(idx);
-        if (!state[idx].running) {
+        if (!state[idx]?.running) {
           // initial setup
           const w = new Worker(new URL('../common/worker.ts', import.meta.url));
           // console.log('new worker');
@@ -176,7 +190,7 @@ export default function Home() {
           w.onmessageerror = (e) => console.log(e);
           workerRef.current.push(w);
           // console.log(workerRef.current);
-          if (!state[idx].hash) {
+          if (!state[idx]?.hash) {
             genesisBlock.getBlockHash()
                 .then(hash => {
                   setState(ww => [
@@ -193,7 +207,7 @@ export default function Home() {
       }
     }
 
-  }, []);
+  }, [threads]);
 
   // console.log(workerRef.current);
   // console.log(state);
@@ -260,13 +274,13 @@ export default function Home() {
                           {state[i]?.running ? 'Stop' : 'Start'}
                         </Button>
                         <Box sx={{ px: 1 }}>
-                          Attempts {state[i]?.attempt.toLocaleString()}
+                          Attempts {state[i]?.attempt?.toLocaleString()}
                         </Box>
                         <Box sx={{ px: 1 }}>
-                          Blocks found {state[i]?.blocks.length}
+                          Blocks found {state[i]?.blocks?.length}
                         </Box>
                         <Box sx={{ px: 1 }}>
-                          HashRate {state[i]?.hashRate.toLocaleString([], opts )}
+                          HashRate {state[i]?.hashRate?.toLocaleString([], opts )}
                         </Box>
                       </Stack>} />
         <ListItemSecondaryAction />
