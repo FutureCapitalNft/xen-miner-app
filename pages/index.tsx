@@ -204,16 +204,13 @@ export default function Home() {
 
     if (workerRef.current.length === 0) {
       for (let idx = 0; idx < threads; idx++) {
-        // console.log(idx);
         if (!state[idx]?.running) {
           // initial setup
           const w = new Worker(new URL('../common/worker.ts', import.meta.url));
-          // console.log('new worker');
           w.onmessage = onMessage;
           w.onerror = (e) => console.log(e);
           w.onmessageerror = (e) => console.log(e);
           workerRef.current.push(w);
-          // console.log(workerRef.current);
           if (!state[idx]?.hash) {
             genesisBlock.getBlockHash()
                 .then(hash => {
@@ -235,10 +232,14 @@ export default function Home() {
 
   useEffect(() => {
     BlockMiner.update({memoryCost: memory});
+    for (let idx = 0; idx < threads; idx++) {
+      if (state[idx]?.running) {
+        terminateWorker(idx);
+        startWorker(idx);
+      }
+    }
   }, [memory]);
 
-  // console.log(workerRef.current);
-  // console.log(state);
   const opts = { maximumFractionDigits: 2 };
 
   return (

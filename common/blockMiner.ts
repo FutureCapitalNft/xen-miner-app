@@ -12,6 +12,8 @@ export class BlockMiner extends EventEmitter {
     #prevHash: string;
     attempts = 0;
 
+    static getOptions = () => BlockMiner.#options;
+
     static getInstance(targetSubstring: string, prevHash: string) {
         if (!BlockMiner.instance) {
             BlockMiner.instance = new BlockMiner(-1, targetSubstring, prevHash);
@@ -40,17 +42,17 @@ export class BlockMiner extends EventEmitter {
         let t0 = performance.now();
         let o0 = this.attempts;
         while (this.#operate) {
-            this.attempts++;
-            if (this.attempts % 100 === 0) {
-                queueMicrotask(() => this.emit('progress', this.attempts));
-                const hashRate = (this.attempts - o0) * 1_000 / (performance.now() - t0);
-                queueMicrotask(() => this.emit('hashRate', hashRate));
-                t0 = performance.now();
-                o0 = this.attempts;
-            }
             const randomData: string = generateRandomSHA256();
             await hashWithArgon2(BlockMiner.#options)(randomData + this.#prevHash, this.#maxLength)
                 .then((hashedData: string) => {
+                    this.attempts++;
+                    if (this.attempts % 100 === 0) {
+                        queueMicrotask(() => this.emit('progress', this.attempts));
+                        const hashRate = (this.attempts - o0) * 1_000 / (performance.now() - t0);
+                        queueMicrotask(() => this.emit('hashRate', hashRate));
+                        t0 = performance.now();
+                        o0 = this.attempts;
+                    }
                     if ((hashedData.slice(-87) || '').includes(this.#targetSubstring)) {
                         queueMicrotask(() => {
                             this.emit('block', {
@@ -71,7 +73,6 @@ export class BlockMiner extends EventEmitter {
     }
 
     static update(options: any) {
-        console.log('update BlockMiners', BlockMiner.#options);
         BlockMiner.#options = {
             ...BlockMiner.#options,
             ...options

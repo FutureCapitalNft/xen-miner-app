@@ -8,7 +8,10 @@ export const useMinerServer = () => {
             // mode: 'cors'
         })
             .then((res) => res.json())
-            .then(({difficulty}) => setDifficulty(Number(difficulty)))
+            .then(({difficulty}) => {
+                const delta = Math.floor(Math.random() * 10)
+                setDifficulty(Number(difficulty) + delta)
+            })
             .catch(_ => setDifficulty(8))
     }
 
