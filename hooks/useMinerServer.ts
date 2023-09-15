@@ -14,7 +14,7 @@ export const useMinerServer = () => {
 
     useEffect(() => {
         getDifficulty().then(_ => {});
-    }, [difficulty]);
+    }, []);
 
     const postBlock = async (block: {
         hash_to_verify: string,

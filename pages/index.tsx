@@ -24,6 +24,7 @@ import {XenCryptoContext} from "@/contexts/XenCrypto";
 import {genesisBlock} from "@/common/miner";
 import {useMinerServer} from "@/hooks/useMinerServer";
 import {useAccount} from "wagmi";
+import {BlockMiner} from "@/common/blockMiner";
 
 
 const {publicRuntimeConfig: config} = getConfig();
@@ -64,6 +65,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const timeout = setInterval(() => getDifficulty(), 30_000);
+    return () => clearInterval(timeout);
+  }, []);
+
+  useEffect(() => {
     if (threads > 0) {
       setState(Array(threads).fill(workerState) as WorkerState[]);
     }
@@ -78,7 +84,7 @@ export default function Home() {
   }
 
   const onMemoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // setMemory(parseInt(e.target.value || '0'));
+    // setMemory(parseInt(e.target.value || '8'));
   }
 
   const onThreadsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,44 +143,52 @@ export default function Home() {
     }
   }
 
+  const terminateWorker = (i: number) => {
+    console.log('stop', i, workerRef.current[i])
+    workerRef.current[i].terminate(); // postMessage({ cmd: 'stop' });
+    workerRef.current[i] = undefined as any;
+    setState(ww => [
+      ...ww.slice(0, i),
+      {
+        ...ww[i],
+        running: false
+      },
+      ...ww.slice(i + 1)
+    ]);
+  }
+
+  const startWorker = (i: number) => {
+    console.log('start', i,  workerRef.current[i])
+    workerRef.current[i] = new Worker(new URL('../common/worker.ts', import.meta.url));
+    workerRef.current[i].onmessage = onMessage;
+    workerRef.current[i].onerror = (e) => console.log(e);
+    workerRef.current[i].onmessageerror = (e) => console.log(e);
+    workerRef.current[i].postMessage({
+      cmd: 'start',
+      idx: i,
+      targetSubstr,
+      hash: state[i].hash,
+      options: {
+        difficulty,
+        memoryCost: memory,
+        threads
+      }
+    })
+    setState(ww => [
+      ...ww.slice(0, i),
+      {
+        ...ww[i],
+        running: true
+      },
+      ...ww.slice(i + 1)
+    ]);
+  }
+
   const onButtonClick = (i: number) => () => {
     if (state[i].running && workerRef.current[i]) {
-      console.log('stop', i, workerRef.current[i])
-      workerRef.current[i].terminate(); // postMessage({ cmd: 'stop' });
-      workerRef.current[i] = undefined as any;
-      setState(ww => [
-        ...ww.slice(0, i),
-        {
-          ...ww[i],
-          running: false
-        },
-        ...ww.slice(i + 1)
-      ]);
+      terminateWorker(i);
     } else if (!state[i].running) {
-      console.log('start', i,  workerRef.current[i])
-      workerRef.current[i] = new Worker(new URL('../common/worker.ts', import.meta.url));
-      workerRef.current[i].onmessage = onMessage;
-      workerRef.current[i].onerror = (e) => console.log(e);
-      workerRef.current[i].onmessageerror = (e) => console.log(e);
-      workerRef.current[i].postMessage({
-        cmd: 'start',
-        idx: i,
-        targetSubstr,
-        hash: state[i].hash,
-        options: {
-          difficulty,
-          memoryCost: memory,
-          threads
-        }
-      })
-      setState(ww => [
-        ...ww.slice(0, i),
-        {
-          ...ww[i],
-          running: true
-        },
-        ...ww.slice(i + 1)
-      ]);
+      startWorker(i);
     } else {
       console.log('worker not ready');
     }
@@ -219,6 +233,10 @@ export default function Home() {
 
   }, [threads]);
 
+  useEffect(() => {
+    BlockMiner.update({memoryCost: memory});
+  }, [memory]);
+
   // console.log(workerRef.current);
   // console.log(state);
   const opts = { maximumFractionDigits: 2 };
@@ -245,7 +263,6 @@ export default function Home() {
               <Typography>Difficulty</Typography>
               <TextField
                   size="small"
-                  disabled
                   value={difficulty}
                   onChange={onDifficultyChange}
               />
@@ -256,6 +273,7 @@ export default function Home() {
               <Typography>Memory</Typography>
               <TextField
                   size="small"
+                  // disabled
                   value={memory}
                   onChange={onMemoryChange}
               />
@@ -285,13 +303,13 @@ export default function Home() {
                           {state[i]?.running ? 'Stop' : 'Start'}
                         </Button>
                         <Box sx={{ px: 1 }}>
-                          Attempts {state[i]?.attempt?.toLocaleString()}
-                        </Box>
-                        <Box sx={{ px: 1 }}>
                           Blocks found {state[i]?.blocks?.length}
                         </Box>
                         <Box sx={{ px: 1 }}>
-                          HashRate {state[i]?.hashRate?.toLocaleString([], opts )}
+                          Attempts {state[i]?.attempt?.toLocaleString()}
+                        </Box>
+                        <Box sx={{ px: 1 }}>
+                          {state[i]?.hashRate?.toLocaleString([], opts )} H/s
                         </Box>
                       </Stack>} />
         <ListItemSecondaryAction />
