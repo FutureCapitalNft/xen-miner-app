@@ -244,7 +244,9 @@ export default function Home() {
     const opts = {maximumFractionDigits: 2};
 
     return (
-        <Container sx={{minHeight: '90vh '}} className={styles.container}>
+        <Container sx={{minHeight: '92vh ', display: 'flex'}}
+                   className={styles.container}>
+            {address && <Stack direction="column" width="100%">
             <Accordion elevation={0}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
                     <Typography>Settings</Typography>
@@ -321,6 +323,13 @@ export default function Home() {
                     </ListItem>)}
                 </AccordionDetails>
             </Accordion>
+            </Stack>}
+            {!address && <Stack
+                direction="column"
+                flexGrow="1"
+                sx={{ alignItems: 'center', justifyContent: 'center' }}>
+                <Typography>Connect your wallet to start mining</Typography>
+            </Stack>}
         </Container>
     )
 }
