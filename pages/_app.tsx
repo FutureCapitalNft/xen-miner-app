@@ -23,6 +23,7 @@ import {Chain} from "@wagmi/core";
 import Layout from "@/layouts/Layout";
 import {Web3Provider} from "@/contexts/Web3";
 import {XenCryptoProvider} from "@/contexts/XenCrypto";
+import {useEffect, useState} from "react";
 
 const { publicRuntimeConfig } = getConfig();
 
@@ -66,10 +67,12 @@ const wagmiConfig = createConfig({
   webSocketPublicClient
 });
 
-
 const XenGptApp = ({ Component, pageProps }: any) => {
-  return (
-    <FlexibleThemeProvider>
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    setLoaded(true);
+  }, []);
+  return loaded ? (<FlexibleThemeProvider>
       <WagmiConfig config={wagmiConfig}>
         <Web3Provider chains={chains}>
           <XenCryptoProvider>
@@ -79,8 +82,7 @@ const XenGptApp = ({ Component, pageProps }: any) => {
           </XenCryptoProvider>
         </Web3Provider>
       </WagmiConfig>
-    </FlexibleThemeProvider>
-  )
+    </FlexibleThemeProvider>) : null;
 };
 
 export default XenGptApp;

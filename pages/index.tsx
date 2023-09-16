@@ -9,16 +9,12 @@ import {
     AccordionSummary,
     Box,
     Button,
-    Container,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    ListItemText,
+    Container, IconButton,
+    ListItem, ListItemText,
     Stack,
     TextField,
     Typography,
 } from '@mui/material';
-import {ThemeContext} from "@/contexts/Theme";
 import getConfig from "next/config";
 import {XenCryptoContext} from "@/contexts/XenCrypto";
 import {genesisBlock} from "@/common/miner";
@@ -26,6 +22,8 @@ import {useMinerServer} from "@/hooks/useMinerServer";
 import {useAccount} from "wagmi";
 import {BlockMiner} from "@/common/blockMiner";
 
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
+import StopCircleIcon from '@mui/icons-material/StopCircle';
 
 const {publicRuntimeConfig: config} = getConfig();
 const weiInEth = BigInt('1000000000000000000');
@@ -50,10 +48,9 @@ export default function Home() {
 
     const [targetSubstr, setTargetSubstr] = useState<string>('XEN11');
     const [difficulty, setDifficulty] = useState<number>(1);
-    // const [memory, setMemory] = useState<number>(8);
     const [threads, setThreads] = useState<number>(0);
-
     const [state, setState] = useState<WorkerState[]>([]);
+    // const [blocks, setBlocks] = useState<string[]>([]);
 
     const minBalance = BigInt(config.minBalance || 0) * weiInEth;
     const hasEnough = balance >= minBalance;
@@ -302,14 +299,14 @@ export default function Home() {
             </Accordion>
             <Accordion elevation={0} defaultExpanded>
                 <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                    <Typography>Workers</Typography>
+                    <Typography>Workers ({threads})</Typography>
                 </AccordionSummary>
                 <AccordionDetails >
                     {workerRef.current.map((w, i) => <ListItem key={i}>
                         <Stack direction="row" sx={{alignItems: 'center '}}>
-                            <Button onClick={onButtonClick(i)}>
-                                {state[i]?.running ? 'Stop' : 'Start'}
-                            </Button>
+                            <IconButton onClick={onButtonClick(i)}>
+                                {state[i]?.running ? <StopCircleIcon/> : <PlayCircleIcon/>}
+                            </IconButton>
                             <Box sx={{px: 1}}>
                                 Blocks found {state[i]?.blocks?.length}
                             </Box>
@@ -323,6 +320,23 @@ export default function Home() {
                     </ListItem>)}
                 </AccordionDetails>
             </Accordion>
+                <Accordion elevation={0} defaultExpanded>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+                        <Typography>
+                            Blocks ({state.map((ws) => ws?.blocks).flat().length})
+                        </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        {state.map((ws, i) => ws?.blocks).flat()
+                            .map((b, i) => <ListItem key={i}>
+                                <ListItemText
+                                    primary={b}
+                                    primaryTypographyProps={{
+                                        style: { textOverflow: "ellipsis", overflow: 'hidden' }
+                                    }} />
+                            </ListItem>)
+                    }</AccordionDetails>
+                </Accordion>
             </Stack>}
             {!address && <Stack
                 direction="column"
