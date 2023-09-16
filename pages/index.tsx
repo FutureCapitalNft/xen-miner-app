@@ -299,7 +299,9 @@ export default function Home() {
             </Accordion>
             <Accordion elevation={0} defaultExpanded>
                 <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                    <Typography>Workers ({threads})</Typography>
+                    <Typography>
+                        Workers ({state.filter(w => w.running).length}/{threads})
+                    </Typography>
                 </AccordionSummary>
                 <AccordionDetails >
                     {workerRef.current.map((w, i) => <ListItem key={i}>
