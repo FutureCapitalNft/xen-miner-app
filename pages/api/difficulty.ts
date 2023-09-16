@@ -12,7 +12,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  const resp = await fetch(`${config.xenMinerServer}/difficulty`, {}  as any);
+  const resp = await fetch(`${config.xenMinerServer}/difficulty`, { cache: 'no-store' } as any);
   if (resp.ok) {
     const {difficulty} = await resp.json();
     res.status(200).json({difficulty});

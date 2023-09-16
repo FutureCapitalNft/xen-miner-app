@@ -5,6 +5,7 @@ export const useMinerServer = () => {
 
     const getDifficulty = async () => {
         fetch(`/api/difficulty`, {
+            cache: 'no-store',
             // mode: 'cors'
         })
             .then((res) => res.json())
