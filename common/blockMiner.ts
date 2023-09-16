@@ -47,9 +47,13 @@ export class BlockMiner extends EventEmitter {
                 .then((hashedData: string) => {
                     this.attempts++;
                     if (this.attempts % 100 === 0) {
-                        queueMicrotask(() => this.emit('progress', this.attempts));
+                        // queueMicrotask(() =>
+                            this.emit('progress', this.attempts)
+                        // );
                         const hashRate = (this.attempts - o0) * 1_000 / (performance.now() - t0);
-                        queueMicrotask(() => this.emit('hashRate', hashRate));
+                        // queueMicrotask(() =>
+                            this.emit('hashRate', hashRate)
+                        // );
                         t0 = performance.now();
                         o0 = this.attempts;
                     }

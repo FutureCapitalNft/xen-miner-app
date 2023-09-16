@@ -21,6 +21,7 @@
     "@wagmi/core": "^1.4.1",
     "argon2": "^0.31.1",
     "argon2-browser": "^1.18.0",
+    "argon2-browser-bw": "^1.18.6",
     "base64-loader": "^1.0.0",
     "eslint": "8.49.0",
     "eslint-config-next": "13.4.19",

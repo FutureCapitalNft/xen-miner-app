@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import argon2, {Argon2BrowserHashOptions, ArgonType} from 'argon2-browser';
+import argon2, {Argon2BrowserHashOptions, ArgonType} from 'argon2-browser-bw';
 
 export const Block = ({
     index = 0,
