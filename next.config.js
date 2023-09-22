@@ -32,7 +32,7 @@ const nextConfig = {
 
     if (!isServer) {
       config.resolve.fallback.fs = false;
-      config.resolve.fallback.crypto = false;
+      // config.resolve.fallback.crypto = false;
     }
 
     // Perform customizations to webpack config

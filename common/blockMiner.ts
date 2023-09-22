@@ -9,6 +9,7 @@ export class BlockMiner extends EventEmitter {
     #operate = false;
     #maxLength = 64;
     readonly #targetSubstring: string;
+    readonly #targetSubstring1: string;
     #prevHash: string;
     attempts = 0;
 
@@ -16,13 +17,14 @@ export class BlockMiner extends EventEmitter {
 
     static getInstance(targetSubstring: string, prevHash: string) {
         if (!BlockMiner.instance) {
-            BlockMiner.instance = new BlockMiner(-1, targetSubstring, prevHash);
+            BlockMiner.instance = new BlockMiner(-1, targetSubstring, '', prevHash);
         }
         return BlockMiner.instance;
     }
 
     constructor(id: number,
                 targetSubstring: string,
+                targetSubstring1: string,
                 prevHash: string,
                 options: any = { memoryCost: 8, difficulty: 1, cores: 1 }
     ) {
@@ -34,6 +36,7 @@ export class BlockMiner extends EventEmitter {
         console.log('create new BlockMiner', id);
         this.id = id;
         this.#targetSubstring = targetSubstring;
+        this.#targetSubstring1 = targetSubstring1;
         this.#prevHash = prevHash;
     }
 
@@ -64,7 +67,18 @@ export class BlockMiner extends EventEmitter {
                                 attempts: this.attempts,
                                 key: randomData + this.#prevHash,
                             });
-                            console.log(`Found valid hash after ${this.attempts} attempts: ${hashedData}`);
+                            console.log(`Found valid ${this.#targetSubstring} hash after ${this.attempts} attempts: ${hashedData}`);
+                        });
+                    }
+                    const re = new RegExp(this.#targetSubstring1, 'g')
+                    if (Array.from((hashedData.slice(-87) || '').matchAll(re)).length > 0) {
+                        queueMicrotask(() => {
+                            this.emit('block', {
+                                hashedData,
+                                attempts: this.attempts,
+                                key: randomData + this.#prevHash,
+                            });
+                            console.log(`Found valid ${this.#targetSubstring1} hash after ${this.attempts} attempts: ${hashedData}`);
                         });
                     }
                 })

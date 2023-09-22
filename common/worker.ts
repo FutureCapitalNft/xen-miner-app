@@ -3,11 +3,23 @@ import {BlockMiner} from "@/common/blockMiner";
 let miner: BlockMiner | null = null;
 
 onmessage = (e) => {
-    console.log('Message received from main script', e.data.cmd, e.data.idx, e.data.targetSubstr);
+    console.log(
+        'Message received from main script',
+        e.data.cmd,
+        e.data.idx,
+        e.data.targetSubstr,
+        e.data.targetSubstr1,
+    );
     const idx = e.data.idx;
 
     if (e.data.cmd === 'start') {
-        miner = new BlockMiner(e.data.idx, e.data.targetSubstr, e.data.hash, e.data.options);
+        miner = new BlockMiner(
+            e.data.idx,
+            e.data.targetSubstr,
+            e.data.targetSubstr1,
+            e.data.hash,
+            e.data.options
+        );
         miner.addListener('block', (result: any) => {
             console.log('Found block', result);
             postMessage({result, type: 'block', idx });
@@ -27,7 +39,13 @@ onmessage = (e) => {
     } else if (e.data.cmd === 'update') {
         console.log('stop miner')
         miner?.stop();
-        miner = new BlockMiner(e.data.idx, e.data.targetSubstr, e.data.hash, e.data.options);
+        miner = new BlockMiner(
+            e.data.idx,
+            e.data.targetSubstr,
+            e.data.targetSubstr1,
+            e.data.hash,
+            e.data.options
+        );
         miner.addListener('block', (result: any) => {
             console.log('Found block', result);
             postMessage({result, type: 'block', idx });

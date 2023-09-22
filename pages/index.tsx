@@ -20,10 +20,13 @@ import {XenCryptoContext} from "@/contexts/XenCrypto";
 import {genesisBlock} from "@/common/miner";
 import {useMinerServer} from "@/hooks/useMinerServer";
 import {useAccount} from "wagmi";
+import {isAddress} from 'viem'
 import {BlockMiner} from "@/common/blockMiner";
 
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
+import CheckOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const {publicRuntimeConfig: config} = getConfig();
 const weiInEth = BigInt('1000000000000000000');
@@ -46,7 +49,9 @@ export default function Home() {
     const {balance} = useContext(XenCryptoContext);
     const {difficulty: memory, getDifficulty, postBlock} = useMinerServer();
 
+    const [addressOverride, setAddressOverride] = useState<string | undefined>(address);
     const [targetSubstr, setTargetSubstr] = useState<string>('XEN11');
+    const [targetSubstr1, setTargetSubstr1] = useState<string>('XUNI[0-9]');
     const [difficulty, setDifficulty] = useState<number>(1);
     const [threads, setThreads] = useState<number>(0);
     const [state, setState] = useState<WorkerState[]>([]);
@@ -72,8 +77,16 @@ export default function Home() {
         }
     }, [threads]);
 
+    const onAddressOverrideChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setAddressOverride(e.target.value);
+    }
+
     const onTargetSubstrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTargetSubstr(e.target.value);
+    }
+
+    const onTargetSubstr1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setTargetSubstr1(e.target.value);
     }
 
     const onDifficultyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,8 +103,9 @@ export default function Home() {
 
     const resetDefaults = () => {
         setTargetSubstr('XEN11');
-        getDifficulty().then(_ => {
-        });
+        setTargetSubstr1('XUNI[0-9]');
+        setAddressOverride(address);
+        getDifficulty().then(_ => {});
         setDifficulty(1);
         setThreads(window?.navigator?.hardwareConcurrency || 1);
     }
@@ -103,7 +117,7 @@ export default function Home() {
                 postBlock({
                     hash_to_verify: e.data.result.hashedData,
                     key: e.data.result.key,
-                    account: address as string,
+                    account: (addressOverride || address) as string,
                     attempts: e.data.result.attempts,
                     hashes_per_second: state[idx].hashRate,
                 }).then(_ => {
@@ -165,6 +179,7 @@ export default function Home() {
             cmd: 'start',
             idx: i,
             targetSubstr,
+            targetSubstr1,
             hash: state[i].hash,
             options: {
                 difficulty,
@@ -251,11 +266,36 @@ export default function Home() {
                 <AccordionDetails>
                     <ListItem>
                         <Stack direction="row" spacing={1} sx={{alignItems: 'center'}}>
+                            <Typography>Address Override</Typography>
+                            {isAddress(addressOverride || '')
+                                ? <CheckOutlineIcon color="success"/>
+                                : <ErrorOutlineIcon color="warning"/>
+                            }
+                            <TextField
+                                size="small"
+                                sx={{ '& input': { md: { width: '475px'} } }}
+                                value={addressOverride}
+                                onChange={onAddressOverrideChange}
+                            />
+                        </Stack>
+                    </ListItem>
+                    <ListItem>
+                        <Stack direction="row" spacing={1} sx={{alignItems: 'center'}}>
                             <Typography>Search For</Typography>
                             <TextField
                                 size="small"
                                 value={targetSubstr}
                                 onChange={onTargetSubstrChange}
+                            />
+                        </Stack>
+                    </ListItem>
+                    <ListItem>
+                        <Stack direction="row" spacing={1} sx={{alignItems: 'center'}}>
+                            <Typography>Search For</Typography>
+                            <TextField
+                                size="small"
+                                value={targetSubstr1}
+                                onChange={onTargetSubstr1Change}
                             />
                         </Stack>
                     </ListItem>
@@ -274,7 +314,7 @@ export default function Home() {
                             <Typography>Memory</Typography>
                             <TextField
                                 size="small"
-                                // disabled
+                                disabled
                                 value={memory}
                                 onChange={onMemoryChange}
                             />
@@ -282,7 +322,7 @@ export default function Home() {
                     </ListItem>
                     <ListItem>
                         <Stack direction="row" spacing={1} sx={{alignItems: 'center'}}>
-                            <Typography>Workers</Typography>
+                            <Typography>Max Workers</Typography>
                             <TextField
                                 size="small"
                                 value={threads}
