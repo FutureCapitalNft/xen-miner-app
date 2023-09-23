@@ -258,7 +258,7 @@ export default function Home() {
     return (
         <Container sx={{minHeight: '92vh ', display: 'flex'}}
                    className={styles.container}>
-            {address && <Stack direction="column" width="100%">
+            <Stack direction="column" width="100%">
             <Accordion elevation={0}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
                     <Typography>Settings</Typography>
@@ -379,13 +379,13 @@ export default function Home() {
                             </ListItem>)
                     }</AccordionDetails>
                 </Accordion>
-            </Stack>}
-            {!address && <Stack
+            </Stack>
+            {/*!address && <Stack
                 direction="column"
                 flexGrow="1"
                 sx={{ alignItems: 'center', justifyContent: 'center' }}>
                 <Typography>Connect your wallet to start mining</Typography>
-            </Stack>}
+            </Stack>*/}
         </Container>
     )
 }
