@@ -346,7 +346,9 @@ export default function Home() {
                 <AccordionDetails >
                     {workerRef.current.map((w, i) => <ListItem key={i}>
                         <Stack direction="row" sx={{alignItems: 'center '}}>
-                            <IconButton onClick={onButtonClick(i)}>
+                            <IconButton
+                                disabled={!isAddress(addressOverride || address || '')}
+                                onClick={onButtonClick(i)}>
                                 {state[i]?.running ? <StopCircleIcon/> : <PlayCircleIcon/>}
                             </IconButton>
                             <Box sx={{px: 1}}>
